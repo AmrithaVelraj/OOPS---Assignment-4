@@ -1,0 +1,26 @@
+package quiz;
+import java.io.*;
+import java.net.*;
+import java.util.Scanner;
+public class QuizClient {
+    public static void main(String[] args) {
+        String host = "localhost";
+        int port = 1234;
+        try (Socket socket = new Socket(host, port);
+             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+             Scanner sc = new Scanner(System.in)) {
+            String fromServer;
+            while ((fromServer = in.readLine()) != null) {
+                System.out.println(fromServer);
+                if (fromServer.trim().toLowerCase().contains("enter your answer")) {
+                    System.out.print(">> ");
+                    String ans = sc.nextLine();
+                    out.println(ans);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
