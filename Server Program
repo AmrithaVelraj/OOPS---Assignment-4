@@ -1,0 +1,64 @@
+package quiz;
+import java.io.*;
+import java.net.*;
+public class QuizServer {
+    public static void main(String[] args) {
+        int port = 1234;
+        try (ServerSocket serverSocket = new ServerSocket(port)) {
+            System.out.println("Quiz Server started on port " + port);
+            while (true) {
+                Socket socket = serverSocket.accept();
+                System.out.println("New client connected: " + socket.getInetAddress());
+                new ClientHandler(socket).start();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+class ClientHandler extends Thread {
+    private Socket socket;
+    private BufferedReader in;
+    private PrintWriter out;
+    private String[] questions = {
+        "Q1. What is the capital of France?",
+        "Q2. 2 + 2 = ?",
+        "Q3. Java is a ___ language?"
+    };
+    private String[] options = {
+        "(a) London  (b) Paris  (c) Berlin  (d) Rome",
+        "(a) 3  (b) 4  (c) 5  (d) 6",
+        "(a) Scripting  (b) Markup  (c) Programming  (d) None"
+    };
+    private char[] answers = {'b', 'b', 'c'};
+    public ClientHandler(Socket socket) {
+        this.socket = socket;
+    }
+    public void run() {
+        try {
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            out = new PrintWriter(socket.getOutputStream(), true); // Auto-flush enabled
+            int score = 0;
+            out.println("Welcome to the Quiz! Answer using option letters (a/b/c/d)");
+            out.println("----------------------------------------------------------");
+            for (int i = 0; i < questions.length; i++) {
+                out.println(questions[i]);
+                out.println(options[i]);
+                out.println("Enter your answer (a/b/c/d):");
+                String clientAnswer = in.readLine();
+                if (clientAnswer != null && clientAnswer.equalsIgnoreCase(String.valueOf(answers[i]))) {
+                    score++;
+                    out.println("✅ Correct!\n");
+                } else {
+                    out.println("❌ Wrong! The correct answer was: " + answers[i] + "\n");
+                }
+            }
+            out.println("----------------------------------------------------------");
+            out.println("Quiz Over! Your final score is: " + score + "/" + questions.length);
+            out.println("Thank you for playing!");
+            socket.close();
+        } catch (IOException e) {
+            System.out.println("Client disconnected.");
+        }
+    }
+}
